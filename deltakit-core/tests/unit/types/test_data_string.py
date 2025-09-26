@@ -28,16 +28,16 @@ class TestDataString:
         dstring = DataString(input_data.encode(encoding))
         assert dstring.to_string(encoding) == input_data
 
-    @pytest.mark.parametrize(
-            "input_bytes",
-            [
-                b"\xc0",
-                "ö".encode(),
-            ]
-    )
-    def test_to_string_fails(self, input_bytes):
-        dstring = DataString(input_bytes)
-        with pytest.raises(UnicodeDecodeError):
+    def test_to_string_fails_on_wrong_type(self):
+        dstring = DataString(["ö".encode()]) # type: ignore
+        expected_msg = "'DataString' object has no attribute '_data'"
+        with pytest.raises(AttributeError, match=expected_msg):
+            dstring.to_string()
+
+    def test_to_string_fails_on_wrong_utf(self):
+        dstring = DataString(b"\xc0")
+        expected_msg = "'utf-8' codec can't decode byte 0xc0..."
+        with pytest.raises(UnicodeDecodeError, match=expected_msg):
             dstring.to_string()
 
     def test_from_datastring(self):
