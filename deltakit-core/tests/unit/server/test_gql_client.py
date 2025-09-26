@@ -55,7 +55,7 @@ class TestGQLClient:
             "gql.client.SyncClientSession.execute",
             side_effect=KeyboardInterrupt,
         )
-        randint = random.randint(100000, 999999)  # nosec B311
+        randint = random.randint(100000, 999999)
         mocker.patch(
             "deltakit_core.api.constants.APP_NAME",
             f"deltakit-testplorer-{randint}"

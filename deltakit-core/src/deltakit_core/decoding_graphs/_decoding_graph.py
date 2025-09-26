@@ -661,7 +661,7 @@ class NXDecodingMultiGraph(NXGraph[_QECNXMG, Tuple[DecodingEdge, int]]):
         -------
         NXDecodingMultiGraph
             Constructed decoding multigraph.
-        """  # noqa: E501
+        """
         nx_graph = cls.base_graph_class()
         detector_records = {} if detector_records is None else detector_records
         edge_records: Dict[Tuple[DecodingEdge, int], EdgeRecord] = {}
@@ -812,7 +812,7 @@ class NXDecodingGraph(NXGraph[_QECNX, DecodingEdge]):
         -------
         NXDecodingGraph
             Constructed decoding graph.
-        """  # noqa: E501
+        """
         nx_graph = cls.base_graph_class()
         detector_records = {} if detector_records is None else detector_records
         edge_records: Dict[DecodingEdge, EdgeRecord] = {}
