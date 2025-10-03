@@ -25,8 +25,9 @@ class TestLEPPerRoundComputation:
         num_shots = 100_000 + np.zeros_like(rounds)
         fidelities = f_0 * (1 - 2 * leppr) ** rounds
         lep = (1 - fidelities) / 2
+        rng = np.random.default_rng(239845794235)
         if is_noisy:
-            lep *= 1 - 1e-4 * np.random.random(lep.size)
+            lep *= 1 - 1e-4 * rng.random(lep.size)
         nfails = np.rint(num_shots * lep)
 
         res = compute_logical_error_per_round(nfails, num_shots, rounds)
