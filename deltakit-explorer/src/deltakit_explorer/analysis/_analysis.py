@@ -293,7 +293,7 @@ def compute_logical_error_per_round(
     # Alias for more readability
     pl = logical_error_rates
     pl_stddev = np.sqrt(pl * (1 - pl) / num_shots)
-    logfidelities_stddev = 2 * pl_stddev / logfidelity
+    logfidelities_stddev = 2 * pl_stddev / fidelities
 
     # If the user only provided one data point, we add a noiseless data-point assuming
     # that the SPAM error is 0.
