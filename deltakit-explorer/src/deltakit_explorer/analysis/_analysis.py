@@ -118,7 +118,7 @@ def get_exp_fit(
         raise
 
 @dataclass(frozen=True)
-class LEPPRResults:
+class LogicalErrorRatePerRoundResults:
     """Named-tuple-like class containing computation results from
     :func:`compute_logical_error_per_round`.
 
@@ -160,7 +160,7 @@ def compute_logical_error_per_round(
     num_rounds: npt.NDArray[np.int_] | Sequence[int],
     *,
     force_include_single_round: bool = False,
-) -> LEPPRResults:
+) -> LogicalErrorRatePerRoundResults:
     """Compute the logical error-rate per round from different logical error-rate
     computations.
 
@@ -358,7 +358,7 @@ def compute_logical_error_per_round(
     # Else
     estimated_spam_error = float((1 - np.exp(offset)) / 2)
     estimated_spam_error_stddev = (1 - 2 * estimated_spam_error) * offset_stddev / 2
-    return LEPPRResults(
+    return LogicalErrorRatePerRoundResults(
         estimated_logical_error_per_round,
         estimated_logical_error_per_round_stddev,
         estimated_spam_error,
