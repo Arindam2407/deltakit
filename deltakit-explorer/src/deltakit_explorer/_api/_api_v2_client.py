@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     import stim
 from deltakit_explorer._api._api_client import APIClient, APIEndpoints
 from deltakit_explorer._api._auth import (get_token,
+                                          https_verification_disabled,
                                           set_token)
 from deltakit_explorer._utils._logging import Logging
 from deltakit_explorer.enums._api_enums import DataFormat
@@ -117,6 +118,7 @@ class APIv2Client(APIClient):
             timeout=self.request_timeout,
             headers=headers,
             json=payload,
+            verify=not https_verification_disabled(),
         )
         if resp.ok:
             return Job(**resp.json())
@@ -131,6 +133,7 @@ class APIv2Client(APIClient):
             timeout=self.request_timeout,
             headers=headers,
             params={"request_id": request_id},
+            verify=not https_verification_disabled(),
         )
         if resp.status_code == 404:
             raise KeyError(f"Request {request_id} not found.")
@@ -187,22 +190,28 @@ class APIv2Client(APIClient):
         request_id: str,
     ) -> dict[str, Any]:
         job = self._submit_task(query_name, variable_values, request_id)
-        # A client request ID is going to be different from
-        # a server-generated one.
-        Logging.info(f"Server created the job {job.request_id}", request_id)
-        while job.status in [JobStatus.SUBMITTED.value, JobStatus.IN_PROGRESS.value]:
-            time.sleep(APIv2Client.STATUS_CHECK_DELAY)
+        try:
+            # A client request ID is going to be different from
+            # a server-generated one.
+            Logging.info(f"Server created the job {job.request_id}", request_id)
+            while job.status in [JobStatus.SUBMITTED.value, JobStatus.IN_PROGRESS.value]:
+                time.sleep(APIv2Client.STATUS_CHECK_DELAY)
+                Logging.info(
+                    f"Job ({job.type}, {job.request_id}), status = {job.status}",
+                    request_id
+                )
+                job = self._get_job_status(job.request_id)
+            job.raise_on_error()
             Logging.info(
-                f"Job ({job.type}, {job.request_id}), status = {job.status}",
+                f"Job ({job.type}, {job.request_id}) completed, status = {job.status}",
                 request_id
             )
-            job = self._get_job_status(job.request_id)
-        job.raise_on_error()
-        Logging.info(
-            f"Job ({job.type}, {job.request_id}) completed, status = {job.status}",
-            request_id
-        )
-        return job.result
+            return job.result
+        except KeyboardInterrupt:
+            count = self.kill(job.request_id)
+            raise InterruptedError(
+                f"Cancelled job {job.request_id} ({count} worker(s))."
+            )
 
     @override
     def kill(self, request_id: str) -> int:

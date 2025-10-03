@@ -1,14 +1,14 @@
-# Repository-wide Ruff configuration.
-# 
-# Should only contain project-wide configuration.
+# Repository-wide Ruff configuration.
 #
-# Note that:
-# - if a Ruff configuration file is present in any subdirectory
-#   and does not contain an "extend" value pointing directly or 
+# Should only contain project-wide configuration.
+#
+# Note that:
+# - if a Ruff configuration file is present in any subdirectory
+#   and does not contain an "extend" value pointing directly or
 #   indirectly (through a chain of "extend" to this file
-#   then this file is completely ignored by ruff, 
-# - if the "extend" value directly or indirectly points to this 
-#   file, values set here are used EXCEPT if redefined in a ruff 
+#   then this file is completely ignored by ruff,
+# - if the "extend" value directly or indirectly points to this
+#   file, values set here are used EXCEPT if redefined in a ruff
 #   configuration file deeper in the folder tree. Redefinition of
 #   values OVERRIDES the previously set value.
 
@@ -46,9 +46,9 @@ exclude = [
     "_version.py",
 ]
 
-# Only include the deltakit folders, not the docs/, tools/ or
+# Only include the deltakit folders, not the docs/, tools/ or
 # other utility folder.
-include = ["deltakit-*/**/*.py", "src/deltakit/**/*.py"]
+include = ["deltakit-*/**/*.py", "src/deltakit/**/*.py", "tools/**/*.py", "tests/**/*.py"]
 
 # Same as Black.
 line-length = 88
@@ -58,12 +58,12 @@ indent-width = 4
 target-version = "py310"
 
 [lint]
-select = ["A", "B", "E", "F", "N", "PL", "RUF100", "W"]
+select = ["A", "B", "E", "F", "N", "PL", "RUF100", "W", "NPY"]
 
 # Specific per-file ignores
 [lint.per-file-ignores]
 "**/__init__.py" = [
-    # For the moment, dynamic __all__ generation raises a lot of issues with 
+    # For the moment, dynamic __all__ generation raises a lot of issues with
     # F401 enabled, so ignore it where it happens, in __init__.py files.
     "F401",
 ]
@@ -71,6 +71,7 @@ select = ["A", "B", "E", "F", "N", "PL", "RUF100", "W"]
 [format]
 # Like Black, use double quotes for strings.
 quote-style = "double"
+exclude = ["deltakit-explorer/**", "./deltakit-decode/**"]
 
 # Like Black, indent with spaces, rather than tabs.
 indent-style = "space"
