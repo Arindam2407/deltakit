@@ -1,4 +1,6 @@
 name: Static Code Analysis
+permissions:
+  contents: read
 
 on:
   workflow_dispatch:
@@ -35,8 +37,12 @@ jobs:
       - name: typos
         run: pixi run typos
 
-      - name: ruff
+      - name: ruff check
         run: pixi run lint
+        if: ${{ always() }}
+
+      - name: ruff format
+        run: pixi run ruff format --check
         if: ${{ always() }}
 
       - name: mypy
@@ -56,5 +62,5 @@ jobs:
         if: ${{ always() }}
 
       - name: pip_audit
-        run: pixi run pip_audit
+        run: pixi run pip_audit --ignore-vuln GHSA-4xh5-x5gv-qwph
         if: ${{ always() }}

@@ -24,10 +24,10 @@ repos:
       # Run the linter.
       - id: ruff-check
       # Run the formatter.
-      # - id: ruff-format
+      - id: ruff-format
 
   - repo: https://github.com/crate-ci/typos
-    rev: v1.34.0
+    rev: v1.37.1
     hooks:
       - id: typos
 
