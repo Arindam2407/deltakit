@@ -416,7 +416,7 @@ def simulate_different_round_numbers_for_lep_per_round_estimation(
             check that.
 
     Returns:
-        Tuple[npt.NDArray[np.int_], npt.NDArray[np.int_]]:
+        tuple[npt.NDArray[np.int_], npt.NDArray[np.int_], npt.NDArray[np.int_]]:
             A tuple consisting of
             - the different number of rounds corresponding to the two other entries,
             - the number of failed shots for the corresponding number of rounds,
