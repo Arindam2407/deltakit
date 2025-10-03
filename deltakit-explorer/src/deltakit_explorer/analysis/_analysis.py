@@ -662,8 +662,7 @@ def calculate_lambda_and_lambda_stddev(
         sigma=logleppr_stddev,
         absolute_sigma=True,
     )
-    slope_variance, offset_variance = np.diagonal(cov)
-    slope_stddev = np.sqrt(slope_variance)
+    slope_stddev, offset_stddev = np.sqrt(np.diagonal(cov))
     lambda_value = float(np.exp(-2 * slope))
     lambda_value_stddev = float(lambda_value * 2 * slope_stddev)
 
@@ -692,7 +691,6 @@ def calculate_lambda_and_lambda_stddev(
     # σ(exp(-offset - ln(Λ)/2)) = exp(-offset - ln(Λ)/2) * σ(-offset - ln(Λ)/2)
     #                           = Λ_0 * sqrt(σ(offset)**2 + σ(Λ)**2 / (4 * Λ**2))
     lambda0 = float(np.exp(-offset - np.log(lambda_value) / 2))
-    offset_stddev = np.sqrt(offset_variance)
     lambda0_stddev = float(
         lambda0
         * np.sqrt(offset_stddev**2 + lambda_value_stddev**2 / (4 * lambda_value**2))
