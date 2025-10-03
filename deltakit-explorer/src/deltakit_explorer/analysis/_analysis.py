@@ -291,7 +291,7 @@ def compute_logical_error_per_round(
     # Alias for more readability
     pl = logical_error_rates
     pl_stddev = np.sqrt(pl * (1 - pl) / num_shots)
-    logfidelities_stddev = 2 * pl_stddev / logfidelity
+    logfidelities_stddev = 2 * pl_stddev / fidelities
 
     # If the user only provided one data point, we add a noiseless data-point assuming
     # that the SPAM error is 0.
@@ -348,15 +348,13 @@ def compute_logical_error_per_round(
     #      sigma(Perrc) = (1 - Perrc) * sigma(slope)
     # The standard deviation on the linear fit parameters can be obtained through the
     # covariance matrix diagonal entries.
-    slope_variance, offset_variance = np.diagonal(cov)
-    slope_stddev = float(np.sqrt(slope_variance))
+    slope_stddev, offset_stddev = np.sqrt(np.diagonal(cov))
     estimated_logical_error_per_round_stddev = (
         (1 - 2 * estimated_logical_error_per_round) * slope_stddev / 2
     )
 
     # Else
     estimated_spam_error = float((1 - np.exp(offset)) / 2)
-    offset_stddev = float(np.sqrt(offset_variance))
     estimated_spam_error_stddev = (1 - 2 * estimated_spam_error) * offset_stddev / 2
     return LEPPRResults(
         estimated_logical_error_per_round,

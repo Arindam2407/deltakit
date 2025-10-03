@@ -84,7 +84,7 @@ class TestLEPPerRoundComputation:
         num_rounds = [5, 10, 15, 20]
         res = compute_logical_error_per_round(num_failed_shots, num_shots, num_rounds)
 
-        assert pytest.approx(res.leppr, 3 * res.leppr_stddev) == 0.1306
+        assert pytest.approx(res.leppr, 3 * res.leppr_stddev) == 0.11912
 
     def test_raises_when_no_fails(self):
         shots = 100_000
