@@ -2,10 +2,11 @@
 """`analysis` module aggregates client-side analytical tools."""
 
 from __future__ import annotations
+
+import warnings
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from math import floor
-import warnings
 
 import numpy as np
 import numpy.typing as npt
@@ -202,7 +203,7 @@ def compute_logical_error_per_round(
             the final estimation. See https://arxiv.org/pdf/2207.06431.pdf (p.21).
 
     Returns:
-        LEPPRResults: detailed results of the computation.
+        LogicalErrorRatePerRoundResults: detailed results of the computation.
 
     Examples:
         Calculating per-round logical error probability and its standard deviation
@@ -483,7 +484,6 @@ def simulate_different_round_numbers_for_lep_per_round_estimation(
 
     return np.asarray(nrounds), np.asarray(nfails), np.asarray(nshots)
 
-
 def calculate_lep_and_lep_stddev(
     fails: npt.NDArray[np.int_] | Sequence[int] | int,
     shots: npt.NDArray[np.int_] | Sequence[int] | int,
@@ -612,16 +612,6 @@ def calculate_lambda_and_lambda_stddev(
                 lep_stddev_per_round=[1.2e-05, 9.3e-06, 3.9e-06],
             )
             lambda_, lambda_stddev = res.lambda_, res.lambda_stddev
-
-        Also recovering the value of Λ_0::
-
-            (lambda_, lambda_stddev), (lambda0, lambda0_stddev) = (
-                calculate_lambda_and_lambda_stddev(
-                    distances=[5, 7, 9],
-                    lep_per_round=[1.992e-04, 4.314e-05, 7.556e-06],
-                    lep_stddev_per_round=[1.2e-05, 9.3e-06, 3.9e-06],
-                )
-            )
 
     """
     # Make sure that the inputs are numpy arrays sorted by distance
