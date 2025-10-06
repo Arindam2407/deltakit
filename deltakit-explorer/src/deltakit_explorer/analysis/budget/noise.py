@@ -40,13 +40,14 @@ def physical_noise_model_to_noise_parameters_and_native_gate_set_and_times(
     def _gate_noise(noise_context: NoiseContext) -> list[NoiseChannel]:
         noise_ops: list[NoiseChannel] = []
         for gate in noise_context.gate_layer.gates:
-            if len(gate.qubits) == 2:
+            qubits = gate.qubits
+            if len(qubits) == 2:
                 noise_ops.append(
-                    Depolarise2(*gate.qubits, noise_data.p_2_qubit_gate_error)
+                    Depolarise2(qubits[0], qubits[1], noise_data.p_2_qubit_gate_error)
                 )
             elif isinstance(gate, OneQubitCliffordGate) and not isinstance(gate, I):
                 noise_ops.append(
-                    Depolarise1(*gate.qubits, noise_data.p_1_qubit_gate_error)
+                    Depolarise1(qubits[0], noise_data.p_1_qubit_gate_error)
                 )
         return noise_ops
 

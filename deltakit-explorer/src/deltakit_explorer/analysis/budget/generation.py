@@ -49,7 +49,7 @@ def _generate_surface_code_memory_decoder_manager(
         "noise_parameters": noise_model.noise_parameters,
     }
 
-    return StimDecoderManager(decoder_circuit, decoder, metadata=metadata)  # type: ignore
+    return StimDecoderManager(decoder_circuit, decoder, metadata=metadata)
 
 
 def _generate_surface_code_memory_decoder_manager_from_h_wrapper(
