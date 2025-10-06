@@ -643,6 +643,13 @@ def calculate_lambda_and_lambda_stddev(
     logleppr_stddev = lep_stddev_per_round / lep_per_round
     # Note that the covariance matrix is used later to estimate the standard deviation
     # of the resulting estimation.
+    # Note that there are two ways to fit here:
+    # 1. Like what is done below, fit w.r.t the distance ``d``.
+    # 2. Fit w.r.t ``(d + 1) / 2``.
+    # Option 2 leads to simpler formulas, especially for standard deviation. But
+    # numerical investigations have found that option 2 was behaving very poorly
+    # (several orders of magnitude worse than option 1) when Λ0 is close to ``1``. For
+    # that reason, option 1 is preferred below.
     (slope, offset), cov = curve_fit(
         lambda x, s, o: s * x + o,
         distances,
