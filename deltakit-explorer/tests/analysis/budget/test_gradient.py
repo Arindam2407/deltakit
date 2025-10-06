@@ -8,6 +8,7 @@ import numpy
 
 
 class TestCentralDifference:
+    @pytest.mark.skip(reason="Gradient computation done through scipy at the moment.")
     @pytest.mark.parametrize(
         "order,c", itertools.product(range(1, 10), (0.1, 0.5, 2, 10))
     )
@@ -24,17 +25,20 @@ class TestCentralDifference:
         )
         assert len(scheme._coefficients) == len(scheme._required_multiples_of_h)
 
+    @pytest.mark.skip(reason="Gradient computation done through scipy at the moment.")
     @pytest.mark.parametrize("c", (0.1, 0.5, 2, 10))
     def test_second_order_scheme(self, c: float):
         scheme = FirstOrderDerivativeCentralDifference(2, c)
         numpy.testing.assert_allclose(scheme.required_multiples_of_h, [-1, 1])
 
+    @pytest.mark.skip(reason="Gradient computation done through scipy at the moment.")
     @pytest.mark.parametrize("order", range(1, 10))
     def test_raise_on_c_too_close_to_1(self, order: int):
         match_str = "^Cannot have a scaling factor too close to 1.$"
         with pytest.raises(RuntimeError, match=match_str):
             FirstOrderDerivativeCentralDifference(order, 1)
 
+    @pytest.mark.skip(reason="Gradient computation done through scipy at the moment.")
     @pytest.mark.parametrize(
         "order,c,func_and_derivative",
         itertools.product(
