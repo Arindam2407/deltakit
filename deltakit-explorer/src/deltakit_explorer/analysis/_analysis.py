@@ -2,10 +2,11 @@
 """`analysis` module aggregates client-side analytical tools."""
 
 from __future__ import annotations
+
+import warnings
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from math import floor
-import warnings
 
 import numpy as np
 import numpy.typing as npt
@@ -115,7 +116,7 @@ def get_exp_fit(
 
 
 @dataclass(frozen=True)
-class LEPPRResults:
+class LogicalErrorRatePerRoundResults:
     """Named-tuple-like class containing computation results from
     :func:`compute_logical_error_per_round`.
 
@@ -140,6 +141,7 @@ class LEPPRResults:
         estimations that might be useful to understand the contribution of each process
         to the final standard-deviation estimation.
     """
+
     leppr: float
     leppr_stddev: float
     spam_error: float
@@ -157,7 +159,7 @@ def compute_logical_error_per_round(
     num_rounds: npt.NDArray[np.int_] | Sequence[int],
     *,
     force_include_single_round: bool = False,
-) -> LEPPRResults:
+) -> LogicalErrorRatePerRoundResults:
     """Compute the logical error-rate per round from different logical error-rate
     computations.
 
@@ -201,7 +203,7 @@ def compute_logical_error_per_round(
             the final estimation. See https://arxiv.org/pdf/2207.06431.pdf (p.21).
 
     Returns:
-        LEPPRResults: detailed results of the computation.
+        LogicalErrorRatePerRoundResults: detailed results of the computation.
 
     Examples:
         Calculating per-round logical error probability and its standard deviation
@@ -290,7 +292,7 @@ def compute_logical_error_per_round(
     # Alias for more readability
     pl = logical_error_rates
     pl_stddev = np.sqrt(pl * (1 - pl) / num_shots)
-    logfidelities_stddev = 2 * pl_stddev / logfidelity
+    logfidelities_stddev = 2 * pl_stddev / fidelities
 
     # If the user only provided one data point, we add a noiseless data-point assuming
     # that the SPAM error is 0.
@@ -347,17 +349,15 @@ def compute_logical_error_per_round(
     #      sigma(Perrc) = (1 - Perrc) * sigma(slope)
     # The standard deviation on the linear fit parameters can be obtained through the
     # covariance matrix diagonal entries.
-    slope_variance, offset_variance = np.diagonal(cov)
-    slope_stddev = float(np.sqrt(slope_variance))
+    slope_stddev, offset_stddev = np.sqrt(np.diagonal(cov))
     estimated_logical_error_per_round_stddev = (
         (1 - 2 * estimated_logical_error_per_round) * slope_stddev / 2
     )
 
     # Else
     estimated_spam_error = float((1 - np.exp(offset)) / 2)
-    offset_stddev = float(np.sqrt(offset_variance))
     estimated_spam_error_stddev = (1 - 2 * estimated_spam_error) * offset_stddev / 2
-    return LEPPRResults(
+    return LogicalErrorRatePerRoundResults(
         estimated_logical_error_per_round,
         estimated_logical_error_per_round_stddev,
         estimated_spam_error,
@@ -416,7 +416,7 @@ def simulate_different_round_numbers_for_lep_per_round_estimation(
             check that.
 
     Returns:
-        Tuple[npt.NDArray[np.int_], npt.NDArray[np.int_]]:
+        tuple[npt.NDArray[np.int_], npt.NDArray[np.int_], npt.NDArray[np.int_]]:
             A tuple consisting of
             - the different number of rounds corresponding to the two other entries,
             - the number of failed shots for the corresponding number of rounds,
@@ -484,7 +484,6 @@ def simulate_different_round_numbers_for_lep_per_round_estimation(
 
     return np.asarray(nrounds), np.asarray(nfails), np.asarray(nshots)
 
-
 def calculate_lep_and_lep_stddev(
     fails: npt.NDArray[np.int_] | Sequence[int] | int,
     shots: npt.NDArray[np.int_] | Sequence[int] | int,
@@ -521,10 +520,8 @@ def calculate_lep_and_lep_stddev(
     return lep, lep_stddev
 
 
-
 @dataclass(frozen=True)
 class LambdaResults:
-
     """Named-tuple-like class containing computation results from
     :func:`calculate_lambda_and_lambda_stddev`.
 
@@ -616,16 +613,6 @@ def calculate_lambda_and_lambda_stddev(
             )
             lambda_, lambda_stddev = res.lambda_, res.lambda_stddev
 
-        Also recovering the value of Λ_0::
-
-            (lambda_, lambda_stddev), (lambda0, lambda0_stddev) = (
-                calculate_lambda_and_lambda_stddev(
-                    distances=[5, 7, 9],
-                    lep_per_round=[1.992e-04, 4.314e-05, 7.556e-06],
-                    lep_stddev_per_round=[1.2e-05, 9.3e-06, 3.9e-06],
-                )
-            )
-
     """
     # Make sure that the inputs are numpy arrays sorted by distance
     isort = np.argsort(distances)
@@ -656,6 +643,13 @@ def calculate_lambda_and_lambda_stddev(
     logleppr_stddev = lep_stddev_per_round / lep_per_round
     # Note that the covariance matrix is used later to estimate the standard deviation
     # of the resulting estimation.
+    # Note that there are two ways to fit here:
+    # 1. Like what is done below, fit w.r.t the distance ``d``.
+    # 2. Fit w.r.t ``(d + 1) / 2``.
+    # Option 2 leads to simpler formulas, especially for standard deviation. But
+    # numerical investigations have found that option 2 was behaving very poorly
+    # (several orders of magnitude worse than option 1) when Λ0 is close to ``1``. For
+    # that reason, option 1 is preferred below.
     (slope, offset), cov = curve_fit(
         lambda x, s, o: s * x + o,
         distances,
@@ -663,8 +657,7 @@ def calculate_lambda_and_lambda_stddev(
         sigma=logleppr_stddev,
         absolute_sigma=True,
     )
-    slope_variance, offset_variance = np.diagonal(cov)
-    slope_stddev = np.sqrt(slope_variance)
+    slope_stddev, offset_stddev = np.sqrt(np.diagonal(cov))
     lambda_value = float(np.exp(-2 * slope))
     lambda_value_stddev = float(lambda_value * 2 * slope_stddev)
 
@@ -677,23 +670,22 @@ def calculate_lambda_and_lambda_stddev(
             "information.",
         )
 
-    # Error analysis explanation.
-    # We start from Ɛ_d = 1 / [ Λ_0 * Λ**((d+1)/2) ]
-    # Applying ln:  ln(Ɛ_d) = - ln(Λ_0) - (d+1)/2 * ln(Λ)
-    #                       = - ln(Λ_0) - ln(Λ)/2 - d * ln(Λ)/2
-    # The linear fit performed above gave us slope  = -ln(Λ)/2
-    #                                        offset = -ln(Λ_0) - ln(Λ)/2
-    # So Λ_0 = exp(-offset - ln(Λ)/2)
-    # Error analysis (to compute the standard deviation of Λ_0) done with the formulas
-    # in https://en.wikipedia.org/wiki/Propagation_of_uncertainty#Example_formulae:
-    # σ(ln(Λ)/2) = σ(Λ) / (2 * Λ)
-    # σ(offset) is obtained from the covariance matrix
-    # σ(-offset - ln(Λ)/2) = sqrt(σ(offset)**2 + σ(ln(Λ) / 2)**2)
+    # Error analysis explanation.
+    # We start from Ɛ_d = 1 / [ Λ_0 * Λ**((d+1)/2) ]
+    # Applying ln:  ln(Ɛ_d) = - ln(Λ_0) - (d+1)/2 * ln(Λ)
+    #                       = - ln(Λ_0) - ln(Λ)/2 - d * ln(Λ)/2
+    # The linear fit performed above gave us slope  = -ln(Λ)/2
+    #                                        offset = -ln(Λ_0) - ln(Λ)/2
+    # So Λ_0 = exp(-offset - ln(Λ)/2)
+    # Error analysis (to compute the standard deviation of Λ_0) done with the formulas
+    # in https://en.wikipedia.org/wiki/Propagation_of_uncertainty#Example_formulae:
+    # σ(ln(Λ)/2) = σ(Λ) / (2 * Λ)
+    # σ(offset) is obtained from the covariance matrix
+    # σ(-offset - ln(Λ)/2) = sqrt(σ(offset)**2 + σ(ln(Λ) / 2)**2)
     #                      = sqrt(σ(offset)**2 + σ(Λ)**2 / (4 * Λ**2))
-    # σ(exp(-offset - ln(Λ)/2)) = exp(-offset - ln(Λ)/2) * σ(-offset - ln(Λ)/2)
+    # σ(exp(-offset - ln(Λ)/2)) = exp(-offset - ln(Λ)/2) * σ(-offset - ln(Λ)/2)
     #                           = Λ_0 * sqrt(σ(offset)**2 + σ(Λ)**2 / (4 * Λ**2))
     lambda0 = float(np.exp(-offset - np.log(lambda_value) / 2))
-    offset_stddev = np.sqrt(offset_variance)
     lambda0_stddev = float(
         lambda0
         * np.sqrt(offset_stddev**2 + lambda_value_stddev**2 / (4 * lambda_value**2))

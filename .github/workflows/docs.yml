@@ -1,12 +1,28 @@
 ---
 name: Build docs
+permissions:
+  contents: read
 
 on:
   pull_request:
     types: [opened, synchronize, reopened]
 
 jobs:
+  check-deltakit-token:
+    name: Check if Deltakit token exists
+    runs-on: ubuntu-latest
+    outputs:
+      exists: ${{ steps.deltakit-token.outputs.exists }}
+    steps:
+        - id: deltakit-token
+          env:
+              DELTAKIT_TOKEN: ${{ secrets.DELTAKIT_TOKEN }}
+          if: ${{ env.DELTAKIT_TOKEN != '' }}
+          run: echo "exists=true" >> $GITHUB_OUTPUT
+
   build-docs:
+    needs: [check-deltakit-token]
+    if: needs.check-deltakit-token.outputs.exists == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
@@ -33,3 +49,5 @@ jobs:
       - name: Build documentation
         run: |
           pixi run build_docs
+        env:
+          DELTAKIT_TOKEN: ${{ secrets.DELTAKIT_TOKEN }}
