@@ -71,7 +71,7 @@ select = ["A", "B", "E", "F", "N", "PL", "RUF100", "W", "NPY"]
 [format]
 # Like Black, use double quotes for strings.
 quote-style = "double"
-exclude = ["deltakit-explorer/**", "./deltakit-decode/**"]
+exclude = ["deltakit-explorer/**"]
 
 # Like Black, indent with spaces, rather than tabs.
 indent-style = "space"
