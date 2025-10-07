@@ -141,7 +141,6 @@ class LogicalErrorRatePerRoundResults:
         estimations that might be useful to understand the contribution of each process
         to the final standard-deviation estimation.
     """
-
     leppr: float
     leppr_stddev: float
     spam_error: float
@@ -203,7 +202,7 @@ def compute_logical_error_per_round(
             the final estimation. See https://arxiv.org/pdf/2207.06431.pdf (p.21).
 
     Returns:
-        LogicalErrorRatePerRoundResults: detailed results of the computation.
+        LEPPRResults: detailed results of the computation.
 
     Examples:
         Calculating per-round logical error probability and its standard deviation
@@ -303,7 +302,7 @@ def compute_logical_error_per_round(
         )
         num_rounds = np.hstack([[0], num_rounds])
         logfidelity = np.hstack([[0], logfidelity])
-        # We cannot set the stddev to 0 here because curve_fit will divide by that
+        # We cannot set the stddev to 0 here because curve_fit will divide by that
         # quantity, so make it very small.
         logfidelities_stddev = np.hstack([[1e-12], logfidelities_stddev])
 
@@ -315,7 +314,7 @@ def compute_logical_error_per_round(
         logfidelity,
         sigma=logfidelities_stddev,
         absolute_sigma=True,
-        # If the error probabilities are exactly 0, the solution should be (0, 0).
+        # If the error probabilities are exactly 0, the solution should be (0, 0).
         # Because we expect the error probabilities to be close to 0, start from (0, 0)
         # as a first estimate.
         p0=(0, 0),
@@ -367,7 +366,6 @@ def compute_logical_error_per_round(
         (1 - 2 * estimated_spam_error) / 2,
         offset_stddev,
     )
-
 
 def simulate_different_round_numbers_for_lep_per_round_estimation(
     simulator: Callable[[int], tuple[int, int]],
@@ -483,6 +481,7 @@ def simulate_different_round_numbers_for_lep_per_round_estimation(
         nshots.append(nshot)
 
     return np.asarray(nrounds), np.asarray(nfails), np.asarray(nshots)
+
 
 def calculate_lep_and_lep_stddev(
     fails: npt.NDArray[np.int_] | Sequence[int] | int,

@@ -1,15 +1,17 @@
 # (c) Copyright Riverlane 2020-2025.
 from __future__ import annotations
+
 import itertools
 import re
 
+import numpy as np
+import pytest
+
+from deltakit_explorer import Logging, analysis
 from deltakit_explorer.analysis._analysis import (
     calculate_lambda_and_lambda_stddev,
     compute_logical_error_per_round,
 )
-import numpy as np
-import pytest
-from deltakit_explorer import Logging, analysis
 
 
 class TestLEPPerRoundComputation:
