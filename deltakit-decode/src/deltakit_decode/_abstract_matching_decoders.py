@@ -4,17 +4,30 @@ import warnings
 from abc import ABC, abstractmethod
 from functools import cached_property
 from itertools import chain, islice
-from typing import (AbstractSet, FrozenSet, Generic, List, Protocol, Sequence,
-                    Set, Tuple, TypeVar)
+from typing import (
+    AbstractSet,
+    FrozenSet,
+    Generic,
+    List,
+    Protocol,
+    Sequence,
+    Set,
+    Tuple,
+    TypeVar,
+)
 
 import networkx as nx
 import numpy as np
 import numpy.typing as npt
-from deltakit_core.decoding_graphs import (DecodingEdge, DecodingHyperEdge,
-                                           HyperLogicals, HyperMultiGraph,
-                                           NXDecodingGraph,
-                                           OrderedDecodingEdges,
-                                           OrderedSyndrome)
+from deltakit_core.decoding_graphs import (
+    DecodingEdge,
+    DecodingHyperEdge,
+    HyperLogicals,
+    HyperMultiGraph,
+    NXDecodingGraph,
+    OrderedDecodingEdges,
+    OrderedSyndrome,
+)
 from deltakit_decode.utils import make_logger
 from typing_extensions import TypeAlias
 
@@ -30,8 +43,9 @@ class DecoderProtocol(Protocol):
     """
 
     @abstractmethod
-    def decode_to_full_correction(self, syndrome: OrderedSyndrome
-                                  ) -> AbstractSet[DecodingHyperEdge]:
+    def decode_to_full_correction(
+        self, syndrome: OrderedSyndrome
+    ) -> AbstractSet[DecodingHyperEdge]:
         """Decode a given syndrome and return the full correction as a collection of
         decoding edges. Edges are un-projected, i.e. the same physical qubit can be
         referenced multiple times at different time-steps.
@@ -123,18 +137,20 @@ class GraphDecoder(DecoderProtocol, ABC, Generic[GraphT]):
         Logging level to use, by default logging.ERROR.
     """
 
-    def __init__(self,
-                 decoding_graph: GraphT,
-                 logicals: HyperLogicals,
-                 lvl: int = logging.ERROR):
+    def __init__(
+        self, decoding_graph: GraphT, logicals: HyperLogicals, lvl: int = logging.ERROR
+    ):
         if not logicals:
             warnings.warn("No logicals are given.", stacklevel=2)
         if not all(logicals):
             warnings.warn("A logical was given with no activators.", stacklevel=2)
-        if not all(logical_edge in decoding_graph.edges
-                   for logical_edge in chain.from_iterable(logicals)):
-            raise ValueError(f"Logicals {logicals} are not entirely within "
-                             f"{decoding_graph.edges}.")
+        if not all(
+            logical_edge in decoding_graph.edges
+            for logical_edge in chain.from_iterable(logicals)
+        ):
+            raise ValueError(
+                f"Logicals {logicals} are not entirely within {decoding_graph.edges}."
+            )
 
         self.decoding_graph = decoding_graph
         self.logicals = logicals
@@ -195,8 +211,7 @@ class MatchingDecoder(GraphDecoder[NXDecodingGraph]):
     """
 
     @abstractmethod
-    def decode_to_matching(self, syndrome: OrderedSyndrome
-                           ) -> Matching:
+    def decode_to_matching(self, syndrome: OrderedSyndrome) -> Matching:
         """Decode a given syndrome and return a matching.
 
         Parameters
@@ -210,18 +225,22 @@ class MatchingDecoder(GraphDecoder[NXDecodingGraph]):
             List of pairs of syndrome bits, as a matching.
         """
 
-    def decode_to_full_correction(self, syndrome: OrderedSyndrome
-                                  ) -> OrderedDecodingEdges:
+    def decode_to_full_correction(
+        self, syndrome: OrderedSyndrome
+    ) -> OrderedDecodingEdges:
         matching = self.decode_to_matching(syndrome)
         correction_paths: List[Sequence[DecodingEdge]] = []
         for origin, destination in matching:
-            if (self.decoding_graph.detector_is_boundary(origin) or
-                    self.decoding_graph.detector_is_boundary(destination)):
+            if self.decoding_graph.detector_is_boundary(
+                origin
+            ) or self.decoding_graph.detector_is_boundary(destination):
                 correction_paths.append(
-                    self.decoding_graph.shortest_path(origin, destination))
+                    self.decoding_graph.shortest_path(origin, destination)
+                )
             else:
                 correction_paths.append(
-                    self.decoding_graph.shortest_path_no_boundaries(origin, destination))
+                    self.decoding_graph.shortest_path_no_boundaries(origin, destination)
+                )
 
         return OrderedDecodingEdges(chain.from_iterable(correction_paths))
 
@@ -236,8 +255,7 @@ class ClusteringDecoder(MatchingDecoder):
     """
 
     @abstractmethod
-    def decode_to_clustering(self, syndrome: OrderedSyndrome
-                             ) -> Set[FrozenSet[int]]:
+    def decode_to_clustering(self, syndrome: OrderedSyndrome) -> Set[FrozenSet[int]]:
         """Decode a given syndrome and return a clustering.
 
         Parameters
@@ -267,15 +285,17 @@ class ClusteringDecoder(MatchingDecoder):
             simple_form_logical = {tuple(sorted((a, b))) for a, b in logical}
             no_logical_edges_view = nx.subgraph_view(
                 self.decoding_graph.graph,
-                filter_edge=lambda a, b, _logical=simple_form_logical:
-                tuple(sorted((a, b))) not in _logical)
+                filter_edge=lambda a, b, _logical=simple_form_logical: tuple(
+                    sorted((a, b))
+                )
+                not in _logical,
+            )
             if any(nx.has_path(no_logical_edges_view, a, b) for a, b in logical):
                 return False
 
         return True
 
-    def decode_to_matching(self, syndrome: OrderedSyndrome
-                           ) -> Matching:
+    def decode_to_matching(self, syndrome: OrderedSyndrome) -> Matching:
         if self.trivial_match_enabled:
             # Get clustering then arbitrarily pair
             clustering = self.decode_to_clustering(syndrome)

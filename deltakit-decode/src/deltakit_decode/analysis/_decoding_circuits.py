@@ -13,10 +13,10 @@ if TYPE_CHECKING:
 def run_decoding_on_circuit(
     circuit: stim.Circuit,
     max_shots: int,
-    decoder: 'DecoderProtocol | _CloudDecoder',
+    decoder: "DecoderProtocol | _CloudDecoder",
     max_batch_size: int = 10_000,
     target_rse: Optional[float] = None,
-    min_fails: int = 10
+    min_fails: int = 10,
 ) -> Dict[str, int]:
     """Compute LEP of the decoder with given circuit.
     The function samples shots in batches and feeds them to decoders'
@@ -79,13 +79,15 @@ def run_decoding_on_circuit(
             # calculate relative standard error
             lep = result[f"fails_log_{log}"] / result["shots"]
             if lep > 0:
-                rse_log = np.sqrt(lep * (1-lep) / result["shots"]) / lep
+                rse_log = np.sqrt(lep * (1 - lep) / result["shots"]) / lep
                 rse = max(rse, rse_log)
                 min_fails_any_log = max(min_fails_any_log, result[log_fails_name])
         shots, fails = result["shots"], result["fails"]
-        pbar.set_description(
-            f"Shots: {shots}; Fails: {fails}; RSE: {rse:.3f}")
-        if target_rse is not None and \
-                rse <= target_rse and min_fails_any_log > min_fails:
+        pbar.set_description(f"Shots: {shots}; Fails: {fails}; RSE: {rse:.3f}")
+        if (
+            target_rse is not None
+            and rse <= target_rse
+            and min_fails_any_log > min_fails
+        ):
             break
     return result

@@ -9,9 +9,11 @@ import numpy as np
 import pymatching
 import stim
 from deltakit_circuit import Circuit
-from deltakit_core.decoding_graphs import (DecodingHyperEdge,
-                                           OrderedDecodingEdges,
-                                           OrderedSyndrome)
+from deltakit_core.decoding_graphs import (
+    DecodingHyperEdge,
+    OrderedDecodingEdges,
+    OrderedSyndrome,
+)
 from deltakit_decode._abstract_matching_decoders import GraphDecoder
 from deltakit_decode.utils._graph_circuit_helpers import parse_stim_circuit
 
@@ -68,24 +70,19 @@ class PyMatchingDecoder(GraphDecoder):
         return tuple(bool(corr) for corr in corrections)
 
     def decode_to_full_correction(
-            self, syndrome: OrderedSyndrome) -> OrderedDecodingEdges:
-
-        py_matching_syndrome = syndrome.as_bitstring(
-            max(self.decoding_graph.nodes) + 1)
+        self, syndrome: OrderedSyndrome
+    ) -> OrderedDecodingEdges:
+        py_matching_syndrome = syndrome.as_bitstring(max(self.decoding_graph.nodes) + 1)
         corrections = self._full_matcher.decode(py_matching_syndrome)
 
         return OrderedDecodingEdges(
             [self.decoding_graph.edges[i] for i in np.nonzero(corrections)[0]]
         )
 
-    def decode_batch_to_full_correction(
-        self, syndrome_batch: np.ndarray
-    ) -> np.ndarray:
+    def decode_batch_to_full_correction(self, syndrome_batch: np.ndarray) -> np.ndarray:
         return self._full_matcher.decode_batch(syndrome_batch)
 
-    def decode_batch_to_logical_flip(
-        self, syndrome_batch: np.ndarray
-    ) -> np.ndarray:
+    def decode_batch_to_logical_flip(self, syndrome_batch: np.ndarray) -> np.ndarray:
         return self._logical_flip_matcher.decode_batch(syndrome_batch)
 
     @classmethod

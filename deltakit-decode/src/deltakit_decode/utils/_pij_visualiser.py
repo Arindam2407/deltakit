@@ -33,7 +33,8 @@ def plot_correlation_matrix(
         import seaborn as sns  # noqa: PLC0415
     except ImportError as ie:
         raise ImportError(
-            "Seaborn is not installed - please install Visualisation extras") from ie
+            "Seaborn is not installed - please install Visualisation extras"
+        ) from ie
 
     # create a list of indices of the minor ticks for which to label with
     # the qubit labels such that the labels are in the middle of the major
@@ -52,7 +53,7 @@ def plot_correlation_matrix(
             return sorted_labels[label_indices.index(tick_number)]
         return None
 
-    col1 = sns.cubehelix_palette(start=.2, rot=-.3, light=1.0, as_cmap=True)
+    col1 = sns.cubehelix_palette(start=0.2, rot=-0.3, light=1.0, as_cmap=True)
     ax = sns.heatmap(matrix, cmap=col1)
     ax.invert_yaxis()
     ax.set(xlabel="Qubits", ylabel="Qubits")

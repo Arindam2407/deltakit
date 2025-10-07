@@ -1,22 +1,24 @@
 # (c) Copyright Riverlane 2020-2025.
-"""Module containing useful functions to aid in the interaction of decoding graphs and Stim circuits.
-"""
-from typing import (List, Set, Tuple)
+"""Module containing useful functions to aid in the interaction of decoding graphs and Stim circuits."""
+
+from typing import List, Set, Tuple
 
 import stim
-from deltakit_core.decoding_graphs import (DecodingEdge,
-                                           DemParser,
-                                           DetectorCounter,
-                                           NXDecodingGraph,
-                                           dem_to_decoding_graph_and_logicals)
+from deltakit_core.decoding_graphs import (
+    DecodingEdge,
+    DemParser,
+    DetectorCounter,
+    NXDecodingGraph,
+    dem_to_decoding_graph_and_logicals,
+)
 
 from deltakit_circuit import Circuit, trim_detectors
 from deltakit_core.decoding_graphs import FixedWidthBitstring
 
 
-def stim_circuit_to_graph_dem(stim_circuit: stim.Circuit,
-                              approximate_disjoint_errors: bool = True
-                              ) -> stim.DetectorErrorModel:
+def stim_circuit_to_graph_dem(
+    stim_circuit: stim.Circuit, approximate_disjoint_errors: bool = True
+) -> stim.DetectorErrorModel:
     """For a given stim circuit, return the graph-like detector error model.
     If the non-decomposed DEM is graph-like, that will be returned. Otherwise,
     the decomposed DEM will be returned.
@@ -29,8 +31,8 @@ def stim_circuit_to_graph_dem(stim_circuit: stim.Circuit,
         Iff True, disjoint error approximations will be allowed.
     """
     dem = stim_circuit.detector_error_model(
-        decompose_errors=False,
-        approximate_disjoint_errors=approximate_disjoint_errors)
+        decompose_errors=False, approximate_disjoint_errors=approximate_disjoint_errors
+    )
 
     detector_counter = DetectorCounter()
     DemParser(detector_counter, lambda *_: None).parse(dem)
@@ -38,17 +40,17 @@ def stim_circuit_to_graph_dem(stim_circuit: stim.Circuit,
     if detector_counter.max_num_detectors() > 2:
         dem = stim_circuit.detector_error_model(
             decompose_errors=True,
-            approximate_disjoint_errors=approximate_disjoint_errors)
+            approximate_disjoint_errors=approximate_disjoint_errors,
+        )
 
     return dem
 
 
-def parse_stim_circuit(stim_circuit: stim.Circuit,
-                       trim_circuit: bool = True,
-                       lexical_detectors: bool = True,
-                       ) -> Tuple[NXDecodingGraph,
-                                  List[Set[DecodingEdge]],
-                                  stim.Circuit]:
+def parse_stim_circuit(
+    stim_circuit: stim.Circuit,
+    trim_circuit: bool = True,
+    lexical_detectors: bool = True,
+) -> Tuple[NXDecodingGraph, List[Set[DecodingEdge]], stim.Circuit]:
     """Parse a Stim file into a decoding graph and the relevant logicals.
 
     Parameters
@@ -89,8 +91,7 @@ def parse_stim_circuit(stim_circuit: stim.Circuit,
 
 
 def split_measurement_bitstring(
-    bitstring: FixedWidthBitstring,
-    circuit: stim.Circuit
+    bitstring: FixedWidthBitstring, circuit: stim.Circuit
 ) -> List[FixedWidthBitstring]:
     """Split a measurement bitstring according to the number of measurements
     in each layer of the circuit.

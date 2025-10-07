@@ -43,8 +43,7 @@ class EmpiricalDecodingErrorDistribution:
         """
         if frequency < 0:
             raise ValueError(f"Event frequency = {frequency} must be non-negative.")
-        event_index = sum((1 << i) * parity
-                          for i, parity in enumerate(event))
+        event_index = sum((1 << i) * parity for i, parity in enumerate(event))
         self._error_distribution[event_index] += frequency
         self._shots += frequency
         if event_index != 0:
@@ -74,23 +73,24 @@ class EmpiricalDecodingErrorDistribution:
             The target logical flips. True if the homology
             class is 1 (flipped), False if the homology class is 0 (not flipped).
         """
-        logical_parity = sum((1 << i) * int(l_error ^ l_correction)
-                             for i, (l_error, l_correction) in
-                             enumerate(zip(correction, target)))
+        logical_parity = sum(
+            (1 << i) * int(l_error ^ l_correction)
+            for i, (l_error, l_correction) in enumerate(zip(correction, target))
+        )
         self._error_distribution[logical_parity] += 1
         self._shots += 1
         self._fails += int(correction != target)
 
     def reset(self):
-        """Resets all data to empty distribution.
-        """
+        """Resets all data to empty distribution."""
         self._shots = 0
         self._fails = 0
         self._fails_per_logical = np.zeros(self._number_of_logicals, dtype=np.int32)
         self._error_distribution = np.zeros(self._distribution_size, dtype=np.uint32)
 
-    def batch_record_errors(self, corrections: npt.NDArray[np.uint8],
-                            target: npt.NDArray[np.uint8]):
+    def batch_record_errors(
+        self, corrections: npt.NDArray[np.uint8], target: npt.NDArray[np.uint8]
+    ):
         """Computes and adds a batch of error events based on batches
         of predicted and target values of the logicals.
 
@@ -113,24 +113,24 @@ class EmpiricalDecodingErrorDistribution:
             logical_parities += (1 << col) * logicals_xor[:, col]
         np.add.at(self._error_distribution, logical_parities, 1)
 
-        fails = np.sum(
-            np.any(corrections != target, axis=1)
-        ).astype(np.int_)
+        fails = np.sum(np.any(corrections != target, axis=1)).astype(np.int_)
 
         self._shots += batch_size
         self._fails += fails
 
-        batch_fails_per_observable = np.sum(
-            corrections != target, axis=0
-        ).astype(np.int_)
+        batch_fails_per_observable = np.sum(corrections != target, axis=0).astype(
+            np.int_
+        )
 
         self._fails_per_logical += batch_fails_per_observable
 
-    def __add__(self,
-                other: EmpiricalDecodingErrorDistribution
-                ) -> EmpiricalDecodingErrorDistribution:
-        if (isinstance(other, EmpiricalDecodingErrorDistribution)
-                and self._number_of_logicals == other.number_of_logicals):
+    def __add__(
+        self, other: EmpiricalDecodingErrorDistribution
+    ) -> EmpiricalDecodingErrorDistribution:
+        if (
+            isinstance(other, EmpiricalDecodingErrorDistribution)
+            and self._number_of_logicals == other.number_of_logicals
+        ):
             sum_distr = EmpiricalDecodingErrorDistribution(self._number_of_logicals)
             for event in product((False, True), repeat=self._number_of_logicals):
                 sum_distr.add_event(event, self[event] + other[event])
@@ -138,12 +138,10 @@ class EmpiricalDecodingErrorDistribution:
         return NotImplemented
 
     @overload
-    def __getitem__(self, index: int) -> int:
-        ...
+    def __getitem__(self, index: int) -> int: ...
 
     @overload
-    def __getitem__(self, index: Tuple[bool, ...]) -> int:
-        ...
+    def __getitem__(self, index: Tuple[bool, ...]) -> int: ...
 
     def __getitem__(self, index) -> int:
         if isinstance(index, int):
@@ -151,14 +149,17 @@ class EmpiricalDecodingErrorDistribution:
 
         if isinstance(index, tuple) and all(isinstance(item, bool) for item in index):
             if len(index) != self.number_of_logicals:
-                raise TypeError(f"EmpiricalDecodingErrorDistribution index tuples "
-                                f"must be of length {self.number_of_logicals}, "
-                                f"not {len(index)}")
-            event = sum((1 << i) * parity
-                        for i, parity in enumerate(index))
+                raise TypeError(
+                    f"EmpiricalDecodingErrorDistribution index tuples "
+                    f"must be of length {self.number_of_logicals}, "
+                    f"not {len(index)}"
+                )
+            event = sum((1 << i) * parity for i, parity in enumerate(index))
             return self[event]
-        raise TypeError("EmpiricalDecodingErrorDistribution indices "
-                        f"must be integers or Tuple[bool], not {type(index)}")
+        raise TypeError(
+            "EmpiricalDecodingErrorDistribution indices "
+            f"must be integers or Tuple[bool], not {type(index)}"
+        )
 
     def __len__(self):
         return self._distribution_size
@@ -199,12 +200,16 @@ class EmpiricalDecodingErrorDistribution:
             A dictionary that describes the distribution of failures across
             all combinations of logicals.
         """
-        return {parity: self[parity] for parity in
-                product((False, True), repeat=self._number_of_logicals)}
+        return {
+            parity: self[parity]
+            for parity in product((False, True), repeat=self._number_of_logicals)
+        }
 
     @classmethod
-    def from_dict(cls, distribution_dict: Dict[Tuple[bool, ...], int],
-                  ) -> EmpiricalDecodingErrorDistribution:
+    def from_dict(
+        cls,
+        distribution_dict: Dict[Tuple[bool, ...], int],
+    ) -> EmpiricalDecodingErrorDistribution:
         """Create a EmpiricalDecodingErrorDistribution from a given distribution
         dict of boolean tuples.
 
@@ -229,18 +234,15 @@ class EmpiricalDecodingErrorDistribution:
 
     @property
     def shots(self) -> int:
-        """ Number of recorded shots.
-        """
+        """Number of recorded shots."""
         return self._shots
 
     @property
     def fails(self) -> int:
-        """ Number of recorded failures.
-        """
+        """Number of recorded failures."""
         return self._fails
 
     @property
     def fails_per_logical(self) -> npt.NDArray[np.int32]:
-        """Numpy array of failure occurrences on each logical.
-        """
+        """Numpy array of failure occurrences on each logical."""
         return self._fails_per_logical

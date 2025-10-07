@@ -8,8 +8,9 @@ from typing import Any, Callable, Dict, Iterable, List, Optional
 import numpy as np
 import pandas as pd
 from deltakit_decode.analysis._decoder_manager import DecoderManager
-from deltakit_decode.analysis._empirical_decoding_error_distribution import \
-    EmpiricalDecodingErrorDistribution
+from deltakit_decode.analysis._empirical_decoding_error_distribution import (
+    EmpiricalDecodingErrorDistribution,
+)
 from deltakit_decode.utils import make_logger
 from pathos.pools import ProcessPool
 from tqdm import tqdm
@@ -48,7 +49,8 @@ class RunAllAnalysisEngine:
         experiment_name: str,
         decoder_managers: Iterable[DecoderManager],
         loop_condition: Optional[
-            Callable[[EmpiricalDecodingErrorDistribution], bool]] = None,
+            Callable[[EmpiricalDecodingErrorDistribution], bool]
+        ] = None,
         data_directory: Optional[Path] = None,
         num_parallel_processes: int = 16,
         lvl: int = logging.NOTSET,
@@ -123,8 +125,9 @@ class RunAllAnalysisEngine:
         desc = "Evaluating codes"
         fmt = "{l_bar}{bar}{r_bar}\n" if self.log.level else "{l_bar}{bar}{r_bar}"
         tqdm_iter = tqdm(self.decoder_managers, desc=desc, bar_format=fmt)
-        return [self._shot_loop(decoder_manager, pool=pool)
-                for decoder_manager in tqdm_iter]
+        return [
+            self._shot_loop(decoder_manager, pool=pool) for decoder_manager in tqdm_iter
+        ]
 
     def _run_serial(self) -> List[Dict[str, Any]]:
         """Helper function to run the decoder managers in serial.
@@ -155,9 +158,10 @@ class RunAllAnalysisEngine:
         )
 
     def _shot_loop(
-        self, decoder_manager: DecoderManager,
+        self,
+        decoder_manager: DecoderManager,
         file_save_lock: Optional[LockBase] = None,
-        pool: ProcessPool = None
+        pool: ProcessPool = None,
     ) -> Dict[str, Any]:
         """Private helper function for performing a single loop for a given
         noise model, decoder and code. Returns an aggregation of accuracy
@@ -169,18 +173,25 @@ class RunAllAnalysisEngine:
         if self.parallel:
             decoder_manager.configure_pool(pool, self.num_parallel_processes)
 
-        while (remaining_shots := int(
-            self.max_shots
-            - decoder_manager.empirical_decoding_error_distribution.shots)
-        ) > 0 and (self.loop_condition is None or self.loop_condition(
-                decoder_manager.empirical_decoding_error_distribution)):
-            procs_needed = min(self.num_parallel_processes,
-                               remaining_shots//self.batch_size)
+        while (
+            remaining_shots := int(
+                self.max_shots
+                - decoder_manager.empirical_decoding_error_distribution.shots
+            )
+        ) > 0 and (
+            self.loop_condition is None
+            or self.loop_condition(
+                decoder_manager.empirical_decoding_error_distribution
+            )
+        ):
+            procs_needed = min(
+                self.num_parallel_processes, remaining_shots // self.batch_size
+            )
             if self.parallel and procs_needed > 1:
                 decoder_manager.run_batch_shots_parallel(
                     batch_limit=self.batch_size * procs_needed,
                     processes=procs_needed,
-                    pool=pool
+                    pool=pool,
                 )
             else:
                 batch_size = min(self.batch_size, remaining_shots)
