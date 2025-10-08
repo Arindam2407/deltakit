@@ -32,10 +32,7 @@ class TestGQLClientTokenManipulations:
         old_server = os.environ.pop(utils.DELTAKIT_SERVER_URL_ENV, default="")
         os.environ[utils.DELTAKIT_SERVER_URL_ENV] = "https://deltakit.riverlane.com/proxy"
         with pytest.raises(ServerException, match="^Token failed validation: Status 401"):
-            GQLClient("https://deltakit.riverlane.com/proxy").set_token(
-                "abcdefghijklmnopqrstuvwxyzabcdef", 
-                validate=True
-                )
+            GQLClient("https://deltakit.riverlane.com/proxy").set_token("abcdefghijklmnopqrstuvwxyzabcdef", validate=True)
         if old_server:
             os.environ[utils.DELTAKIT_SERVER_URL_ENV] = old_server
 
